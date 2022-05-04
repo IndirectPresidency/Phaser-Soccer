@@ -35,5 +35,6 @@
 	},
 	"dependencies": {
 		"phaser": "^3.50.0"
-	}
+	},
+	"browserslist": "> 0.25%, not dead"
 }
