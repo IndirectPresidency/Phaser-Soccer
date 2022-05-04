@@ -10,6 +10,7 @@ export default class Game extends Phaser.Scene {
 		this.screenH = 480;
 		this.centerX = this.screenW / 2;
 		this.centerY = this.screenH / 2;
+		this.scores = [0, 0];
 	}
 
 	preload() {
@@ -17,21 +18,26 @@ export default class Game extends Phaser.Scene {
 		this.load.image("map", map);
 		this.load.image("goalBack", goalBack);
 		this.load.image("goalPost", goalPost);
+		// this.load.bitmapFont('font', )
 	}
 
 	create() {
 		this.map = this.physics.add.sprite(this.centerX, this.centerY, "map");
 		this.cameras.main.setBackgroundColor("#eee");
 
+		//* Player
 		this.player = this.physics.add.sprite(100, 100, "player");
 		this.player.setCollideWorldBounds(true);
 		this.player.setScale(0.7);
 
-		this.ball = this.physics.add.sprite(200, 200, "ball");
+		//* Ball
+		this.ball = this.physics.add.sprite(this.centerX, this.centerY, "ball");
 		this.ball.setCollideWorldBounds(true);
 		this.ball.setBounce(0.8);
 		this.ball.setScale(0.5);
 		this.ball.setFriction(0);
+
+		//* Goals
 
 		this.goalBack1 = this.physics.add.staticImage(0, this.centerY, "goalBack");
 		this.goalBack2 = this.physics.add.staticImage(
@@ -51,6 +57,26 @@ export default class Game extends Phaser.Scene {
 			312,
 			"goalPost"
 		);
+
+		this.goalLeft = this.add.rectangle(40, this.centerY, 60, 125);
+		this.physics.add.existing(this.goalLeft);
+
+		this.goalRight = this.add.rectangle(
+			this.screenW - 40,
+			this.centerY,
+			60,
+			125
+		);
+		this.physics.add.existing(this.goalRight);
+
+		//* Score Text
+		this.scoreTxt = this.add.text(this.centerX, 10, "0 0", {
+			fontFamily: "arial",
+			fontSize: "50px",
+			fontWeight: 900,
+		});
+		this.scoreTxt.setPosition(this.cent)
+
 	}
 
 	update() {
@@ -73,6 +99,21 @@ export default class Game extends Phaser.Scene {
 		this.physics.collide(this.ball, this.goalPost2);
 		this.physics.collide(this.ball, this.goalPost3);
 		this.physics.collide(this.ball, this.goalPost4);
+
+		const scene = this;
+
+		function goalLeft() {
+			console.log("Goal Left");
+			scene.scene.restart();
+		}
+
+		function goalRight() {
+			console.log("Goal Right");
+			scene.scene.restart();
+		}
+
+		this.physics.collide(this.ball, this.goalLeft, goalLeft);
+		this.physics.collide(this.ball, this.goalRight, goalRight);
 
 		const lowerVelocity = 0.01;
 		const xVel = this.ball.body.velocity.x;
