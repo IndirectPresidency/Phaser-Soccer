@@ -1,8 +1,8 @@
-import player from "../assets/player.png";
+import playerImg from "../assets/player.png";
 import map from "../assets/map.png";
 import goalBack from "../assets/goalBack.png";
 import goalPost from "../assets/goalPost.png";
-import ball from "../assets/ball.png";
+import ballImg from "../assets/ball.png";
 export default class Game extends Phaser.Scene {
 	constructor() {
 		super("game");
@@ -13,14 +13,13 @@ export default class Game extends Phaser.Scene {
 		this.centerY = this.screenH / 2;
 		this.scores = [0, 0];
 	}
-	
 
 	preload() {
-		this.load.image("player", player);
+		this.load.image("player", playerImg);
 		this.load.image("map", map);
 		this.load.image("goalBack", goalBack);
 		this.load.image("goalPost", goalPost);
-		this.load.image("ball", ball);
+		this.load.image("ball", ballImg);
 	}
 
 	create() {
@@ -36,6 +35,12 @@ export default class Game extends Phaser.Scene {
 		);
 		this.player.setCollideWorldBounds(true);
 		this.player.setScale(0.7);
+    
+    //* Player 1
+    this.player1Pos = [100,100]
+		this.player1 = this.physics.add.sprite(this.player1Pos[0], this.player1Pos[0], "player");
+		this.player1.setCollideWorldBounds(true);
+		this.player1.setScale(0.7);
 
 		//* Ball
 		this.ballPos = [this.centerX, this.centerY];
@@ -44,6 +49,7 @@ export default class Game extends Phaser.Scene {
 			this.ballPos[1],
 			"ball"
 		);
+    
 		this.ball.setCollideWorldBounds(true);
 		this.ball.setBounce(0.8);
 		this.ball.setScale(0.018);
@@ -116,22 +122,20 @@ export default class Game extends Phaser.Scene {
 		const scene = this;
 
 		this.physics.collide(this.player, this.ball);
+		this.physics.collide(this.player1, this.ball);
 
-		this.physics.collide(this.player, this.goalBack1);
-		this.physics.collide(this.player, this.goalBack2);
+		function goalCollide(object) {
+			scene.physics.collide(object, scene.goalBack1);
+			scene.physics.collide(object, scene.goalBack2);
 
-		this.physics.collide(this.player, this.goalPost1);
-		this.physics.collide(this.player, this.goalPost2);
-		this.physics.collide(this.player, this.goalPost3);
-		this.physics.collide(this.player, this.goalPost4);
-
-		this.physics.collide(this.ball, this.goalBack1);
-		this.physics.collide(this.ball, this.goalBack2);
-
-		this.physics.collide(this.ball, this.goalPost1);
-		this.physics.collide(this.ball, this.goalPost2);
-		this.physics.collide(this.ball, this.goalPost3);
-		this.physics.collide(this.ball, this.goalPost4);
+			scene.physics.collide(object, scene.goalPost1);
+			scene.physics.collide(object, scene.goalPost2);
+			scene.physics.collide(object, scene.goalPost3);
+			scene.physics.collide(object, scene.goalPost4);
+		}
+		goalCollide(this.player);
+		goalCollide(this.player1);
+		goalCollide(this.ball);
 
 		//* Goals
 
@@ -191,6 +195,27 @@ export default class Game extends Phaser.Scene {
 			this.player.setVelocityY(this.playerSpeed);
 		} else {
 			this.player.setVelocityY(0);
+		}
+
+		let keyA = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
+		let keyS = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
+		let keyD = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
+		let keyW = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
+
+		if (keyD.isDown) {
+			this.player1.setVelocityX(this.playerSpeed);
+		} else if (keyA.isDown) {
+			this.player1.setVelocityX(-this.playerSpeed);
+		} else {
+			this.player1.setVelocityX(0);
+		}
+
+		if (keyW.isDown) {
+			this.player1.setVelocityY(-this.playerSpeed);
+		} else if (keyS.isDown) {
+			this.player1.setVelocityY(this.playerSpeed);
+		} else {
+			this.player1.setVelocityY(0);
 		}
 	}
 }
