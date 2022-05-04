@@ -2,6 +2,7 @@ import player from "../assets/player.png";
 import map from "../assets/map.png";
 import goalBack from "../assets/goalBack.png";
 import goalPost from "../assets/goalPost.png";
+import ball from "../assets/ball.png";
 export default class Game extends Phaser.Scene {
 	constructor() {
 		super("game");
@@ -11,12 +12,14 @@ export default class Game extends Phaser.Scene {
 		this.centerX = this.screenW / 2;
 		this.centerY = this.screenH / 2;
 	}
+	
 
 	preload() {
 		this.load.image("player", player);
 		this.load.image("map", map);
 		this.load.image("goalBack", goalBack);
 		this.load.image("goalPost", goalPost);
+		this.load.image("ball", ball);
 	}
 
 	create() {
@@ -30,7 +33,7 @@ export default class Game extends Phaser.Scene {
 		this.ball = this.physics.add.sprite(200, 200, "ball");
 		this.ball.setCollideWorldBounds(true);
 		this.ball.setBounce(0.8);
-		this.ball.setScale(0.5);
+		this.ball.setScale(0.018);
 		this.ball.setFriction(0);
 
 		this.goalBack1 = this.physics.add.staticImage(0, this.centerY, "goalBack");
