@@ -3,6 +3,8 @@ import map from "../assets/map.png";
 import goalBack from "../assets/goalBack.png";
 import goalPost from "../assets/goalPost.png";
 import ballImg from "../assets/ball.png";
+import topBlockImg from "../assets/top.png";
+import sideBlockImg from "../assets/side.png";
 export default class Game extends Phaser.Scene {
 	constructor() {
 		super("game");
@@ -20,6 +22,8 @@ export default class Game extends Phaser.Scene {
 		this.load.image("goalBack", goalBack);
 		this.load.image("goalPost", goalPost);
 		this.load.image("ball", ballImg);
+		this.load.image("topBlock", topBlockImg);
+		this.load.image("sideBlock", sideBlockImg);
 	}
 
 	create() {
@@ -35,10 +39,14 @@ export default class Game extends Phaser.Scene {
 		);
 		this.player.setCollideWorldBounds(true);
 		this.player.setScale(0.7);
-    
-    //* Player 1
-    this.player1Pos = [100,100]
-		this.player1 = this.physics.add.sprite(this.player1Pos[0], this.player1Pos[0], "player");
+
+		//* Player 1
+		this.player1Pos = [100, 100];
+		this.player1 = this.physics.add.sprite(
+			this.player1Pos[0],
+			this.player1Pos[0],
+			"player"
+		);
 		this.player1.setCollideWorldBounds(true);
 		this.player1.setScale(0.7);
 
@@ -49,7 +57,7 @@ export default class Game extends Phaser.Scene {
 			this.ballPos[1],
 			"ball"
 		);
-    
+
 		this.ball.setCollideWorldBounds(true);
 		this.ball.setBounce(0.8);
 		this.ball.setScale(0.018);
@@ -115,6 +123,30 @@ export default class Game extends Phaser.Scene {
 			this.centerX + spaceApart - this.score2.width / 2,
 			this.score2.y
 		);
+
+		this.ballBlock1 = this.physics.add.staticImage(this.centerX, 0, "topBlock");
+		this.ballBlock1.visible = false;
+
+		this.ballBlock2 = this.physics.add.staticImage(
+			this.centerX,
+			this.screenH,
+			"topBlock"
+		);
+		this.ballBlock2.visible = false;
+
+		this.ballBlock3 = this.physics.add.staticImage(
+			0,
+			this.centerY,
+			"sideBlock"
+		);
+		this.ballBlock3.visible = false;
+
+		this.ballBlock4 = this.physics.add.staticImage(
+			this.screenW,
+			this.centerY,
+			"sideBlock"
+		);
+		this.ballBlock4.visible = false;
 	}
 
 	update() {
@@ -123,6 +155,11 @@ export default class Game extends Phaser.Scene {
 
 		this.physics.collide(this.player, this.ball);
 		this.physics.collide(this.player1, this.ball);
+
+		this.physics.collide(this.ball, this.ballBlock1);
+		this.physics.collide(this.ball, this.ballBlock2);
+		this.physics.collide(this.ball, this.ballBlock3);
+		this.physics.collide(this.ball, this.ballBlock4);
 
 		function goalCollide(object) {
 			scene.physics.collide(object, scene.goalBack1);
@@ -142,6 +179,8 @@ export default class Game extends Phaser.Scene {
 		function restart() {
 			scene.player.setPosition(scene.playerPos[0], scene.playerPos[1]);
 			scene.player.setVelocity(0);
+			scene.player1.setPosition(scene.player1Pos[0], scene.player1Pos[0]);
+			scene.player1.setVelocity(0);
 			scene.ball.setPosition(scene.ballPos[0], scene.ballPos[1]);
 			scene.ball.setVelocity(0);
 			scene.goalLeft.setPosition(scene.goalLPos[0], scene.goalLPos[1]);
