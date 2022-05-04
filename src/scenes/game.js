@@ -153,9 +153,6 @@ export default class Game extends Phaser.Scene {
 		const cursors = this.input.keyboard.createCursorKeys();
 		const scene = this;
 
-		this.physics.collide(this.player, this.ball);
-		this.physics.collide(this.player1, this.ball);
-
 		this.physics.collide(this.ball, this.ballBlock1);
 		this.physics.collide(this.ball, this.ballBlock2);
 		this.physics.collide(this.ball, this.ballBlock3);
@@ -213,9 +210,13 @@ export default class Game extends Phaser.Scene {
 		const yVel = this.ball.body.velocity.y;
 		if (xVel > 0) {
 			this.ball.setVelocityX(xVel - xVel * lowerVelocity);
+		} else if (xVel < 0) {
+			this.ball.setVelocityX(xVel + Math.abs(xVel) * lowerVelocity);
 		}
 		if (yVel > 0) {
 			this.ball.setVelocityY(yVel - yVel * lowerVelocity);
+		} else if (yVel < 0) {
+			this.ball.setVelocityY(yVel + Math.abs(yVel) * lowerVelocity);
 		}
 
 		if (cursors.left.isDown) {
@@ -256,5 +257,8 @@ export default class Game extends Phaser.Scene {
 		} else {
 			this.player1.setVelocityY(0);
 		}
+
+		this.physics.collide(this.player1, this.ball);
+		this.physics.collide(this.player, this.ball);
 	}
 }
