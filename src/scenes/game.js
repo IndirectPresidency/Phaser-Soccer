@@ -1,25 +1,35 @@
-import playerImg from "../assets/player.png";
+import player1Img from "../assets/player1.png";
+import player2Img from "../assets/player2.png";
 import map from "../assets/map.png";
 import goalBack from "../assets/goalBack.png";
 import goalPost from "../assets/goalPost.png";
 import ballImg from "../assets/ball.png";
+import topBlockImg from "../assets/top.png";
+import sideBlockImg from "../assets/side.png";
 export default class Game extends Phaser.Scene {
 	constructor() {
 		super("game");
 		this.playerSpeed = 180;
+		this.playerScale = 0.1;
 		this.screenW = 854;
 		this.screenH = 480;
 		this.centerX = this.screenW / 2;
 		this.centerY = this.screenH / 2;
 		this.scores = [0, 0];
+		this.timeNum = 300;
+		this.pausedTime = 10;
+		this.paused = false;
 	}
 
 	preload() {
-		this.load.image("player", playerImg);
+		this.load.image("player1", player1Img);
+		this.load.image("player2", player2Img);
 		this.load.image("map", map);
 		this.load.image("goalBack", goalBack);
 		this.load.image("goalPost", goalPost);
 		this.load.image("ball", ballImg);
+		this.load.image("topBlock", topBlockImg);
+		this.load.image("sideBlock", sideBlockImg);
 	}
 
 	create() {
@@ -27,20 +37,24 @@ export default class Game extends Phaser.Scene {
 		this.cameras.main.setBackgroundColor("#eee");
 
 		//* Player
-		this.playerPos = [100, 100];
+		this.playerPos = [this.screenW - 200, this.centerY];
 		this.player = this.physics.add.sprite(
 			this.playerPos[0],
-			this.playerPos[0],
-			"player"
+			this.playerPos[1],
+			"player2"
 		);
 		this.player.setCollideWorldBounds(true);
-		this.player.setScale(0.7);
-    
-    //* Player 1
-    this.player1Pos = [100,100]
-		this.player1 = this.physics.add.sprite(this.player1Pos[0], this.player1Pos[0], "player");
+		this.player.setScale(this.playerScale);
+
+		//* Player 1
+		this.player1Pos = [200, this.centerY];
+		this.player1 = this.physics.add.sprite(
+			this.player1Pos[0],
+			this.player1Pos[1],
+			"player1"
+		);
 		this.player1.setCollideWorldBounds(true);
-		this.player1.setScale(0.7);
+		this.player1.setScale(this.playerScale);
 
 		//* Ball
 		this.ballPos = [this.centerX, this.centerY];
@@ -49,7 +63,7 @@ export default class Game extends Phaser.Scene {
 			this.ballPos[1],
 			"ball"
 		);
-    
+
 		this.ball.setCollideWorldBounds(true);
 		this.ball.setBounce(0.8);
 		this.ball.setScale(0.018);
@@ -115,14 +129,165 @@ export default class Game extends Phaser.Scene {
 			this.centerX + spaceApart - this.score2.width / 2,
 			this.score2.y
 		);
+
+		this.ballBlock1 = this.physics.add.staticImage(this.centerX, 0, "topBlock");
+		this.ballBlock1.visible = false;
+
+		this.ballBlock2 = this.physics.add.staticImage(
+			this.centerX,
+			this.screenH,
+			"topBlock"
+		);
+		this.ballBlock2.visible = false;
+
+		this.ballBlock3 = this.physics.add.staticImage(
+			0,
+			this.centerY,
+			"sideBlock"
+		);
+		this.ballBlock3.visible = false;
+
+		this.ballBlock4 = this.physics.add.staticImage(
+			this.screenW,
+			this.centerY,
+			"sideBlock"
+		);
+		this.ballBlock4.visible = false;
+
+		//* Timer
+		this.timerTxt = this.add.text(this.centerX, this.screenH - 40, "5:00", {
+			fontFamily: "arial",
+			fontSize: "20px",
+			fontWeight: 900,
+		});
+		this.timerTxt.setPosition(
+			this.centerX - this.timerTxt.width / 2,
+			this.timerTxt.y
+		);
+		this.timer();
+
+		//* Start Timer
+		this.startTimerTxt = this.add.text(
+			this.centerX,
+			this.centerY - 50,
+			this.pausedTime,
+			{
+				fontFamily: "arial",
+				fontSize: "30px",
+				fontWeight: 900,
+			}
+		);
+		this.startTimerTxt.setPosition(
+			this.centerX - this.startTimerTxt.width / 2,
+			this.startTimerTxt.y
+		);
+		this.startTimerTxt.visible = false;
 	}
 
 	update() {
+		if (this.paused) return;
+
 		const cursors = this.input.keyboard.createCursorKeys();
 		const scene = this;
 
-		this.physics.collide(this.player, this.ball);
+		//* Goals
+
+		function restart() {
+			scene.player.setVelocity(0);
+			scene.ball.setVelocity(0);
+			scene.player1.setVelocity(0);
+			scene.goalLeft.body.velocity.y = 0;
+			scene.goalLeft.body.velocity.x = 0;
+			scene.goalRight.body.velocity.x = 0;
+			scene.goalRight.body.velocity.y = 0;
+			scene.player.setPosition(scene.playerPos[0], scene.playerPos[1]);
+			scene.player1.setPosition(scene.player1Pos[0], scene.player1Pos[1]);
+			scene.goalLeft.setPosition(scene.goalLPos[0], scene.goalLPos[1]);
+			scene.goalRight.setPosition(scene.goalRPos[0], scene.goalRPos[1]);
+			scene.ball.setPosition(scene.ballPos[0], scene.ballPos[1]);
+		}
+
+		function goalLeft() {
+			scene.paused = true;
+			scene.scores[1]++;
+			scene.score2.setText(scene.scores[1]);
+			restart();
+		}
+
+		function goalRight() {
+			scene.paused = true;
+			scene.scores[0]++;
+			scene.score1.setText(scene.scores[0]);
+			restart();
+		}
+
+		const lowerVelocity = 0.01;
+		const xVel = this.ball.body.velocity.x;
+		const yVel = this.ball.body.velocity.y;
+		if (xVel > 0) {
+			this.ball.setVelocityX(xVel - xVel * lowerVelocity);
+		} else if (xVel < 0) {
+			this.ball.setVelocityX(xVel + Math.abs(xVel) * lowerVelocity);
+		}
+		if (yVel > 0) {
+			this.ball.setVelocityY(yVel - yVel * lowerVelocity);
+		} else if (yVel < 0) {
+			this.ball.setVelocityY(yVel + Math.abs(yVel) * lowerVelocity);
+		}
+
+		if (cursors.left.isDown) {
+			this.player.setVelocityX(-this.playerSpeed);
+			this.player.flipX = false;
+		} else if (cursors.right.isDown) {
+			this.player.setVelocityX(this.playerSpeed);
+			this.player.flipX = true;
+		} else {
+			this.player.setVelocityX(0);
+		}
+
+		if (cursors.up.isDown) {
+			this.player.setVelocityY(-this.playerSpeed);
+			if (this.player.flipX) this.player.rotation = 80;
+			if (!this.player.flipX) this.player.rotation = -80;
+		} else if (cursors.down.isDown) {
+			this.player.setVelocityY(this.playerSpeed);
+			if (this.player.flipX) this.player.rotation = -80;
+			if (!this.player.flipX) this.player.rotation = 80;
+		} else {
+			this.player.setVelocityY(0);
+			this.player.rotation = 0;
+		}
+
+		let keyA = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
+		let keyS = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
+		let keyD = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
+		let keyW = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
+
+		if (keyD.isDown) {
+			this.player1.setVelocityX(this.playerSpeed);
+			this.player1.flipX = false;
+		} else if (keyA.isDown) {
+			this.player1.setVelocityX(-this.playerSpeed);
+			this.player1.flipX = true;
+		} else {
+			this.player1.setVelocityX(0);
+		}
+
+		if (keyW.isDown) {
+			this.player1.setVelocityY(-this.playerSpeed);
+			if (this.player1.flipX) this.player1.rotation = -80;
+			if (!this.player1.flipX) this.player1.rotation = 80;
+		} else if (keyS.isDown) {
+			this.player1.setVelocityY(this.playerSpeed);
+			if (this.player1.flipX) this.player1.rotation = 80;
+			if (!this.player1.flipX) this.player1.rotation = -80;
+		} else {
+			this.player1.setVelocityY(0);
+			this.player1.rotation = 0;
+		}
+
 		this.physics.collide(this.player1, this.ball);
+		this.physics.collide(this.player, this.ball);
 
 		function goalCollide(object) {
 			scene.physics.collide(object, scene.goalBack1);
@@ -137,85 +302,59 @@ export default class Game extends Phaser.Scene {
 		goalCollide(this.player1);
 		goalCollide(this.ball);
 
-		//* Goals
-
-		function restart() {
-			scene.player.setPosition(scene.playerPos[0], scene.playerPos[1]);
-			scene.player.setVelocity(0);
-			scene.ball.setPosition(scene.ballPos[0], scene.ballPos[1]);
-			scene.ball.setVelocity(0);
-			scene.goalLeft.setPosition(scene.goalLPos[0], scene.goalLPos[1]);
-			scene.goalLeft.body.velocity.x = 0;
-			scene.goalLeft.body.velocity.y = 0;
-			scene.goalRight.setPosition(scene.goalRPos[0], scene.goalRPos[1]);
-			scene.goalRight.body.velocity.x = 0;
-			scene.goalRight.body.velocity.y = 0;
-		}
-
-		function goalLeft() {
-			console.log("Goal Left");
-			scene.scores[1]++;
-			scene.score2.setText(scene.scores[1]);
-			restart();
-		}
-
-		function goalRight() {
-			console.log("Goal Right");
-			scene.scores[0]++;
-			scene.score1.setText(scene.scores[0]);
-			restart();
-		}
-
 		this.physics.collide(this.ball, this.goalLeft, goalLeft);
 		this.physics.collide(this.ball, this.goalRight, goalRight);
 
-		const lowerVelocity = 0.01;
-		const xVel = this.ball.body.velocity.x;
-		const yVel = this.ball.body.velocity.y;
-		if (xVel > 0) {
-			this.ball.setVelocityX(xVel - xVel * lowerVelocity);
-		}
-		if (yVel > 0) {
-			this.ball.setVelocityY(yVel - yVel * lowerVelocity);
-		}
-
-		if (cursors.left.isDown) {
-			this.player.setVelocityX(-this.playerSpeed);
-			this.player.flipX = true;
-		} else if (cursors.right.isDown) {
-			this.player.setVelocityX(this.playerSpeed);
-			this.player.flipX = false;
-		} else {
-			this.player.setVelocityX(0);
-		}
-
-		if (cursors.up.isDown) {
-			this.player.setVelocityY(-this.playerSpeed);
-		} else if (cursors.down.isDown) {
-			this.player.setVelocityY(this.playerSpeed);
-		} else {
-			this.player.setVelocityY(0);
-		}
-
-		let keyA = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
-		let keyS = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
-		let keyD = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
-		let keyW = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
-
-		if (keyD.isDown) {
-			this.player1.setVelocityX(this.playerSpeed);
-		} else if (keyA.isDown) {
-			this.player1.setVelocityX(-this.playerSpeed);
-		} else {
-			this.player1.setVelocityX(0);
-		}
-
-		if (keyW.isDown) {
-			this.player1.setVelocityY(-this.playerSpeed);
-		} else if (keyS.isDown) {
-			this.player1.setVelocityY(this.playerSpeed);
-		} else {
-			this.player1.setVelocityY(0);
-		}
+		this.physics.collide(this.ball, this.ballBlock1);
+		this.physics.collide(this.ball, this.ballBlock2);
+		this.physics.collide(this.ball, this.ballBlock3);
+		this.physics.collide(this.ball, this.ballBlock4);
 	}
+
+	timer() {
+		function secToMinAndSec(num) {
+			const min = Math.floor(num / 60);
+			const sec = num % 60;
+			if (sec < 10) return `${min}:0${sec}`;
+			return `${min}:${sec}`;
+		}
+		const timer = setInterval(() => {
+			if (this.paused) {
+				clearInterval(timer);
+				this.startTimer();
+				return;
+			} else {
+				this.timeNum--;
+				this.timerTxt.setText(secToMinAndSec(this.timeNum));
+			}
+			if (this.timeNum < 1) {
+				this.endGame();
+				return;
+			}
+		}, 1000);
+	}
+
+	startTimer() {
+		this.startTimerTxt.visible = true;
+
+		const timer = setInterval(() => {
+			if (this.pausedTime == 0) {
+				clearInterval(timer);
+				this.paused = false;
+				this.startTimerTxt.visible = false;
+				this.pausedTime = 10;
+				this.timer();
+				return;
+			} else {
+				this.pausedTime--;
+				this.startTimerTxt.setText(this.pausedTime);
+				this.startTimerTxt.setPosition(
+					this.centerX - this.startTimerTxt.width / 2,
+					this.startTimerTxt.y
+				);
+			}
+		}, 1000);
+	}
+
+	endGame() {}
 }
