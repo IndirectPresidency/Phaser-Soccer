@@ -16,9 +16,13 @@ export default class Game extends Phaser.Scene {
 		this.centerX = this.screenW / 2;
 		this.centerY = this.screenH / 2;
 		this.scores = [0, 0];
+		this.player1Scores = [0, 0];
+		this.playerScores = [0, 0];
 		this.timeNum = 300;
-		this.pausedTime = 10;
+		this.pausedTime = 15;
 		this.paused = false;
+		this.lastTouched = "";
+		this.showScoreTime = 5000;
 	}
 
 	preload() {
@@ -108,28 +112,7 @@ export default class Game extends Phaser.Scene {
 		);
 		this.physics.add.existing(this.goalRight);
 
-		//* Score Text
-		const spaceApart = 30;
-		this.score1 = this.add.text(this.centerX - spaceApart, 10, "0", {
-			fontFamily: "arial",
-			fontSize: "50px",
-			fontWeight: 900,
-		});
-		this.score1.setPosition(
-			this.centerX - spaceApart - this.score1.width / 2,
-			this.score1.y
-		);
-
-		this.score2 = this.add.text(this.centerX + spaceApart, 10, "0", {
-			fontFamily: "arial",
-			fontSize: "50px",
-			fontWeight: 900,
-		});
-		this.score2.setPosition(
-			this.centerX + spaceApart - this.score2.width / 2,
-			this.score2.y
-		);
-
+		//* Ball block things
 		this.ballBlock1 = this.physics.add.staticImage(this.centerX, 0, "topBlock");
 		this.ballBlock1.visible = false;
 
@@ -182,10 +165,66 @@ export default class Game extends Phaser.Scene {
 			this.startTimerTxt.y
 		);
 		this.startTimerTxt.visible = false;
+
+		//* End screen
+		this.endScreenBg = this.add.rectangle(
+			this.centerX,
+			this.centerY,
+			this.screenW,
+			this.screenH,
+			0
+		);
+		this.endScreenBg.visible = false;
+
+		this.winnerTxt = this.add.text(this.centerX, this.centerY - 50, "", {
+			fontFamily: "arial",
+			fontSize: "30px",
+			fontWeight: 900,
+		});
+		this.winnerTxt.visible = false;
+
+		//* Score Text
+		const spaceApart = 30;
+		this.score1 = this.add.text(this.centerX - spaceApart, 10, "0", {
+			fontFamily: "arial",
+			fontSize: "50px",
+			fontWeight: 900,
+		});
+		this.score1.setPosition(
+			this.centerX - spaceApart - this.score1.width / 2,
+			this.score1.y
+		);
+
+		this.score2 = this.add.text(this.centerX + spaceApart, 10, "0", {
+			fontFamily: "arial",
+			fontSize: "50px",
+			fontWeight: 900,
+		});
+		this.score2.setPosition(
+			this.centerX + spaceApart - this.score2.width / 2,
+			this.score2.y
+		);
+
+		this.team1MVP = this.add.text(this.centerX, 100, "", {
+			fontFamily: "arial",
+			fontSize: "20px",
+			fontWeight: 900,
+		});
+
+		this.team2MVP = this.add.text(this.centerX, 100, "", {
+			fontFamily: "arial",
+			fontSize: "20px",
+			fontWeight: 900,
+		});
 	}
 
 	update() {
-		if (this.paused) return;
+		if (this.paused) {
+			this.player1.setVelocity(0);
+			this.player.setVelocity(0);
+			this.ball.setVelocity(0);
+			return;
+		}
 
 		const cursors = this.input.keyboard.createCursorKeys();
 		const scene = this;
@@ -205,20 +244,6 @@ export default class Game extends Phaser.Scene {
 			scene.goalLeft.setPosition(scene.goalLPos[0], scene.goalLPos[1]);
 			scene.goalRight.setPosition(scene.goalRPos[0], scene.goalRPos[1]);
 			scene.ball.setPosition(scene.ballPos[0], scene.ballPos[1]);
-		}
-
-		function goalLeft() {
-			scene.paused = true;
-			scene.scores[1]++;
-			scene.score2.setText(scene.scores[1]);
-			restart();
-		}
-
-		function goalRight() {
-			scene.paused = true;
-			scene.scores[0]++;
-			scene.score1.setText(scene.scores[0]);
-			restart();
 		}
 
 		const lowerVelocity = 0.01;
@@ -286,8 +311,32 @@ export default class Game extends Phaser.Scene {
 			this.player1.rotation = 0;
 		}
 
-		this.physics.collide(this.player1, this.ball);
-		this.physics.collide(this.player, this.ball);
+		function goalLeft() {
+			scene.paused = true;
+			scene.showScore(scene.lastTouched, 0);
+			scene.scores[1]++;
+			scene.score2.setText(scene.scores[1]);
+			setTimeout(() => {
+				restart();
+			}, scene.showScoreTime);
+		}
+
+		function goalRight() {
+			scene.paused = true;
+			scene.showScore(scene.lastTouched, 1);
+			scene.scores[0]++;
+			scene.score1.setText(scene.scores[0]);
+			setTimeout(() => {
+				restart();
+			}, scene.showScoreTime);
+		}
+
+		function lastTouch(text) {
+			scene.lastTouched = text;
+		}
+
+		this.physics.collide(this.player1, this.ball, () => lastTouch("player1"));
+		this.physics.collide(this.player, this.ball, () => lastTouch("player"));
 
 		function goalCollide(object) {
 			scene.physics.collide(object, scene.goalBack1);
@@ -329,6 +378,7 @@ export default class Game extends Phaser.Scene {
 			}
 			if (this.timeNum < 1) {
 				this.endGame();
+				clearInterval(timer);
 				return;
 			}
 		}, 1000);
@@ -356,5 +406,91 @@ export default class Game extends Phaser.Scene {
 		}, 1000);
 	}
 
-	endGame() {}
+	endGame() {
+		const cam = this.cameras.main;
+		const scene = this;
+		this.paused = true;
+		let winner = "";
+		if (this.scores[0] > this.scores[1]) {
+			cam.pan(this.player1.x, this.player1.y, 0);
+			cam.setZoom(5);
+			cam.fade(2000);
+			showStats();
+			winner = "Player 1 wins!";
+		} else if (this.scores[0] == this.scores[1]) {
+			cam.fade(2000);
+			showStats();
+			winner = "It's a TIE!";
+		} else {
+			cam.pan(this.player.x, this.player.y, 0);
+			cam.setZoom(5);
+			cam.fade(2000);
+			showStats();
+			winner = "Player 2 wins!";
+		}
+		this.winnerTxt.setText(winner);
+		this.winnerTxt.setPosition(
+			this.centerX - this.winnerTxt.width / 2,
+			this.winnerTxt.y
+		);
+		this.winnerTxt.visible = true;
+
+		this.team1MVP.setText(`Team 1 MVP: ${getTeamMVP(1)}`);
+		this.team2MVP.setText(`Team 2 MVP: ${getTeamMVP(0)}`);
+
+		this.team1MVP.setPosition(
+			this.centerX - 230 - this.team1MVP.width / 2,
+			this.team1MVP.y
+		);
+
+		this.team2MVP.setPosition(
+			this.centerX + 230 - this.team2MVP.width / 2,
+			this.team2MVP.y
+		);
+
+		function getTeamMVP(team) {
+			// console.log()
+			if (team == 0) {
+				if (scene.scores[1] == 0) {
+					return "None";
+				}
+			} else {
+				if (scene.scores[0] == 0) {
+					return "None";
+				}
+			}
+
+			console.log(scene.playerScores, scene.player1Scores);
+			if (scene.playerScores[team] > scene.player1Scores[team]) {
+				return "Player 2";
+			} else {
+				return "Player 1";
+			}
+		}
+		function showStats() {
+			setTimeout(() => {
+				scene.endScreenBg.visible = true;
+				cam.fadeIn(0);
+				cam.setZoom(1);
+				cam.pan(scene.centerX, scene.centerY, 0);
+			}, 2500);
+		}
+	}
+
+	showScore(scored, goal) {
+		const cam = this.cameras.main;
+		if (scored == "player") {
+			cam.pan(this.player.x, this.player.y, 0);
+			this.playerScores[goal]++;
+		} else {
+			cam.pan(this.player1.x, this.player1.y, 0);
+			this.player1Scores[goal]++;
+		}
+		cam.setZoom(5);
+
+		setTimeout(() => {
+			cam.pan(this.centerX, this.centerY, 0);
+			cam.setZoom(1);
+		}, this.showScoreTime);
+	}
 }
