@@ -28,6 +28,11 @@ export default class Game extends Phaser.Scene {
 		this.paused = false;
 		this.lastTouched = "";
 		this.showScoreTime = 5000;
+		this.kickCooldownTIme = 20;
+		this.player1KickCooldown = 0;
+		this.player2KickCooldown = 0;
+		this.kickDistance = 20;
+		this.kickSpeed = 200;
 	}
 
 	preload() {
@@ -295,6 +300,12 @@ export default class Game extends Phaser.Scene {
 		let keyS = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S);
 		let keyD = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
 		let keyW = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
+		let keySpace = this.input.keyboard.addKey(
+			Phaser.Input.Keyboard.KeyCodes.SPACE
+		);
+		let keyEnt = this.input.keyboard.addKey(
+			Phaser.Input.Keyboard.KeyCodes.ENTER
+		);
 
 		if (keyD.isDown) {
 			this.player1.setVelocityX(this.playerSpeed);
@@ -317,6 +328,50 @@ export default class Game extends Phaser.Scene {
 		} else {
 			this.player1.setVelocityY(0);
 			this.player1.rotation = 0;
+		}
+
+		console.log(this.isPlayer1KickReady());
+
+		if (
+			keySpace.isDown &&
+			Phaser.Math.Distance.BetweenPoints(this.player1, this.ball) <= 45 &&
+			this.isPlayer1KickReady()
+		) {
+			if (this.player1.flipX == false) {
+				this.ball.setVelocityX(this.kickSpeed);
+				this.ball.setVelocityY(
+					Phaser.Math.Between(-this.kickSpeed, this.kickSpeed)
+				);
+				this.player1KickCooldownFun();
+			}
+			if (this.player1.flipX == true) {
+				this.ball.setVelocityX(-this.kickSpeed);
+				this.ball.setVelocityY(
+					Phaser.Math.Between(-this.kickSpeed, this.kickSpeed)
+				);
+				this.player1KickCooldownFun();
+			}
+		}
+
+		if (
+			keyEnt.isDown &&
+			Phaser.Math.Distance.BetweenPoints(this.player2, this.ball) <= 45 &&
+			this.isPlayer2KickReady()
+		) {
+			if (this.player2.flipX == true) {
+				this.ball.setVelocityX(this.kickSpeed);
+				this.ball.setVelocityY(
+					Phaser.Math.Between(-this.kickSpeed, this.kickSpeed)
+				);
+				this.player2KickCooldownFun();
+			}
+			if (this.player2.flipX == false) {
+				this.ball.setVelocityX(-this.kickSpeed);
+				this.ball.setVelocityY(
+					Phaser.Math.Between(-this.kickSpeed, this.kickSpeed)
+				);
+				this.player2KickCooldownFun();
+			}
 		}
 
 		function goalLeft() {
@@ -508,5 +563,35 @@ export default class Game extends Phaser.Scene {
 		// this.physics.collide(this.player, this.player1);
 		this.physics.collide(this.player1, this.ball, () => lastTouch("player1"));
 		this.physics.collide(this.player2, this.ball, () => lastTouch("player"));
+	}
+
+	player1KickCooldownFun() {
+		this.player1KickCooldown = this.kickCooldownTIme;
+		const timer = setInterval(() => {
+			if (this.player1KickCooldown < 1) {
+				clearInterval(timer);
+				return;
+			}
+			this.player1KickCooldown--;
+		}, 1000);
+	}
+
+	player2KickCooldownFun() {
+		this.player2KickCooldown = this.kickCooldownTIme;
+		const timer = setInterval(() => {
+			if (this.player2KickCooldown < 1) {
+				clearInterval(timer);
+				return;
+			}
+			this.player2KickCooldown--;
+		}, 1000);
+	}
+
+	isPlayer1KickReady() {
+		return this.player1KickCooldown < 1; 
+	}
+
+	isPlayer2KickReady() {
+		return this.player2KickCooldown < 1;
 	}
 }
