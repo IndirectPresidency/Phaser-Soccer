@@ -17,9 +17,14 @@ export default class Game extends Phaser.Scene {
 		this.centerY = this.screenH / 2;
 		this.scores = [0, 0];
 		this.player1Scores = [0, 0];
-		this.playerScores = [0, 0];
+		this.player2Scores = [0, 0];
 		this.timeNum = 300;
-		this.pausedTime = 15;
+
+		//* Do not change
+		this.pauseTime = 10;
+		//* uneless yoy change this too
+		this.pausedTime = 10;
+
 		this.paused = false;
 		this.lastTouched = "";
 		this.showScoreTime = 5000;
@@ -41,14 +46,14 @@ export default class Game extends Phaser.Scene {
 		this.cameras.main.setBackgroundColor("#eee");
 
 		//* Player
-		this.playerPos = [this.screenW - 200, this.centerY];
-		this.player = this.physics.add.sprite(
-			this.playerPos[0],
-			this.playerPos[1],
+		this.player2Pos = [this.screenW - 200, this.centerY];
+		this.player2 = this.physics.add.sprite(
+			this.player2Pos[0],
+			this.player2Pos[1],
 			"player2"
 		);
-		this.player.setCollideWorldBounds(true);
-		this.player.setScale(this.playerScale);
+		this.player2.setCollideWorldBounds(true);
+		this.player2.setScale(this.playerScale);
 
 		//* Player 1
 		this.player1Pos = [200, this.centerY];
@@ -71,7 +76,6 @@ export default class Game extends Phaser.Scene {
 		this.ball.setCollideWorldBounds(true);
 		this.ball.setBounce(0.8);
 		this.ball.setScale(0.018);
-		this.ball.setFriction(0);
 
 		//* Goals
 
@@ -218,10 +222,14 @@ export default class Game extends Phaser.Scene {
 		});
 	}
 
+	//* ----------
+	//* Update
+	//* ----------
+
 	update() {
 		if (this.paused) {
 			this.player1.setVelocity(0);
-			this.player.setVelocity(0);
+			this.player2.setVelocity(0);
 			this.ball.setVelocity(0);
 			return;
 		}
@@ -232,14 +240,14 @@ export default class Game extends Phaser.Scene {
 		//* Goals
 
 		function restart() {
-			scene.player.setVelocity(0);
+			scene.player2.setVelocity(0);
 			scene.ball.setVelocity(0);
 			scene.player1.setVelocity(0);
 			scene.goalLeft.body.velocity.y = 0;
 			scene.goalLeft.body.velocity.x = 0;
 			scene.goalRight.body.velocity.x = 0;
 			scene.goalRight.body.velocity.y = 0;
-			scene.player.setPosition(scene.playerPos[0], scene.playerPos[1]);
+			scene.player2.setPosition(scene.player2Pos[0], scene.player2Pos[1]);
 			scene.player1.setPosition(scene.player1Pos[0], scene.player1Pos[1]);
 			scene.goalLeft.setPosition(scene.goalLPos[0], scene.goalLPos[1]);
 			scene.goalRight.setPosition(scene.goalRPos[0], scene.goalRPos[1]);
@@ -261,26 +269,26 @@ export default class Game extends Phaser.Scene {
 		}
 
 		if (cursors.left.isDown) {
-			this.player.setVelocityX(-this.playerSpeed);
-			this.player.flipX = false;
+			this.player2.setVelocityX(-this.playerSpeed);
+			this.player2.flipX = false;
 		} else if (cursors.right.isDown) {
-			this.player.setVelocityX(this.playerSpeed);
-			this.player.flipX = true;
+			this.player2.setVelocityX(this.playerSpeed);
+			this.player2.flipX = true;
 		} else {
-			this.player.setVelocityX(0);
+			this.player2.setVelocityX(0);
 		}
 
 		if (cursors.up.isDown) {
-			this.player.setVelocityY(-this.playerSpeed);
-			if (this.player.flipX) this.player.rotation = 80;
-			if (!this.player.flipX) this.player.rotation = -80;
+			this.player2.setVelocityY(-this.playerSpeed);
+			if (this.player2.flipX) this.player2.rotation = 80;
+			if (!this.player2.flipX) this.player2.rotation = -80;
 		} else if (cursors.down.isDown) {
-			this.player.setVelocityY(this.playerSpeed);
-			if (this.player.flipX) this.player.rotation = -80;
-			if (!this.player.flipX) this.player.rotation = 80;
+			this.player2.setVelocityY(this.playerSpeed);
+			if (this.player2.flipX) this.player2.rotation = -80;
+			if (!this.player2.flipX) this.player2.rotation = 80;
 		} else {
-			this.player.setVelocityY(0);
-			this.player.rotation = 0;
+			this.player2.setVelocityY(0);
+			this.player2.rotation = 0;
 		}
 
 		let keyA = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
@@ -331,13 +339,6 @@ export default class Game extends Phaser.Scene {
 			}, scene.showScoreTime);
 		}
 
-		function lastTouch(text) {
-			scene.lastTouched = text;
-		}
-
-		this.physics.collide(this.player1, this.ball, () => lastTouch("player1"));
-		this.physics.collide(this.player, this.ball, () => lastTouch("player"));
-
 		function goalCollide(object) {
 			scene.physics.collide(object, scene.goalBack1);
 			scene.physics.collide(object, scene.goalBack2);
@@ -347,7 +348,7 @@ export default class Game extends Phaser.Scene {
 			scene.physics.collide(object, scene.goalPost3);
 			scene.physics.collide(object, scene.goalPost4);
 		}
-		goalCollide(this.player);
+		goalCollide(this.player2);
 		goalCollide(this.player1);
 		goalCollide(this.ball);
 
@@ -358,6 +359,8 @@ export default class Game extends Phaser.Scene {
 		this.physics.collide(this.ball, this.ballBlock2);
 		this.physics.collide(this.ball, this.ballBlock3);
 		this.physics.collide(this.ball, this.ballBlock4);
+
+		this.playerCollide();
 	}
 
 	timer() {
@@ -392,7 +395,7 @@ export default class Game extends Phaser.Scene {
 				clearInterval(timer);
 				this.paused = false;
 				this.startTimerTxt.visible = false;
-				this.pausedTime = 10;
+				this.pausedTime = this.pauseTime;
 				this.timer();
 				return;
 			} else {
@@ -422,7 +425,7 @@ export default class Game extends Phaser.Scene {
 			showStats();
 			winner = "It's a TIE!";
 		} else {
-			cam.pan(this.player.x, this.player.y, 0);
+			cam.pan(this.player2.x, this.player2.y, 0);
 			cam.setZoom(5);
 			cam.fade(2000);
 			showStats();
@@ -451,17 +454,19 @@ export default class Game extends Phaser.Scene {
 		function getTeamMVP(team) {
 			// console.log()
 			if (team == 0) {
+				if (scene.player1Scores[0] == scene.player2Scores[0]) return "Player 1";
 				if (scene.scores[1] == 0) {
 					return "None";
 				}
 			} else {
+				if (scene.player2Scores[1] == scene.player1Scores[1]) return "Player 2";
 				if (scene.scores[0] == 0) {
 					return "None";
 				}
 			}
 
-			console.log(scene.playerScores, scene.player1Scores);
-			if (scene.playerScores[team] > scene.player1Scores[team]) {
+			console.log(scene.player2Scores, scene.player1Scores);
+			if (scene.player2Scores[team] > scene.player1Scores[team]) {
 				return "Player 2";
 			} else {
 				return "Player 1";
@@ -479,9 +484,9 @@ export default class Game extends Phaser.Scene {
 
 	showScore(scored, goal) {
 		const cam = this.cameras.main;
-		if (scored == "player") {
-			cam.pan(this.player.x, this.player.y, 0);
-			this.playerScores[goal]++;
+		if (scored == "player2") {
+			cam.pan(this.player2.x, this.player2.y, 0);
+			this.player2Scores[goal]++;
 		} else {
 			cam.pan(this.player1.x, this.player1.y, 0);
 			this.player1Scores[goal]++;
@@ -492,5 +497,16 @@ export default class Game extends Phaser.Scene {
 			cam.pan(this.centerX, this.centerY, 0);
 			cam.setZoom(1);
 		}, this.showScoreTime);
+	}
+
+	playerCollide() {
+		const scene = this;
+		function lastTouch(text) {
+			scene.lastTouched = text;
+		}
+
+		// this.physics.collide(this.player, this.player1);
+		this.physics.collide(this.player1, this.ball, () => lastTouch("player1"));
+		this.physics.collide(this.player2, this.ball, () => lastTouch("player"));
 	}
 }
