@@ -28,11 +28,11 @@ export default class Game extends Phaser.Scene {
 		this.paused = false;
 		this.lastTouched = "";
 		this.showScoreTime = 5000;
-		this.kickCooldownTIme = 20;
+		this.kickCooldownTIme = 10;
 		this.player1KickCooldown = 0;
 		this.player2KickCooldown = 0;
-		this.kickDistance = 20;
-		this.kickSpeed = 200;
+		this.kickDistance = 40;
+		this.kickSpeed = 300;
 	}
 
 	preload() {
@@ -108,7 +108,7 @@ export default class Game extends Phaser.Scene {
 			this.goalLPos[0],
 			this.goalLPos[1],
 			60,
-			125
+			109
 		);
 		this.physics.add.existing(this.goalLeft);
 
@@ -117,7 +117,7 @@ export default class Game extends Phaser.Scene {
 			this.goalRPos[0],
 			this.goalRPos[1],
 			60,
-			125
+			109
 		);
 		this.physics.add.existing(this.goalRight);
 
@@ -257,6 +257,8 @@ export default class Game extends Phaser.Scene {
 			scene.goalLeft.setPosition(scene.goalLPos[0], scene.goalLPos[1]);
 			scene.goalRight.setPosition(scene.goalRPos[0], scene.goalRPos[1]);
 			scene.ball.setPosition(scene.ballPos[0], scene.ballPos[1]);
+			scene.player1KickCooldown = 0;
+			scene.player2KickCooldown = 0;
 		}
 
 		const lowerVelocity = 0.01;
@@ -329,8 +331,6 @@ export default class Game extends Phaser.Scene {
 			this.player1.setVelocityY(0);
 			this.player1.rotation = 0;
 		}
-
-		console.log(this.isPlayer1KickReady());
 
 		if (
 			keySpace.isDown &&
@@ -562,7 +562,7 @@ export default class Game extends Phaser.Scene {
 
 		// this.physics.collide(this.player, this.player1);
 		this.physics.collide(this.player1, this.ball, () => lastTouch("player1"));
-		this.physics.collide(this.player2, this.ball, () => lastTouch("player"));
+		this.physics.collide(this.player2, this.ball, () => lastTouch("player2"));
 	}
 
 	player1KickCooldownFun() {
@@ -588,7 +588,7 @@ export default class Game extends Phaser.Scene {
 	}
 
 	isPlayer1KickReady() {
-		return this.player1KickCooldown < 1; 
+		return this.player1KickCooldown < 1;
 	}
 
 	isPlayer2KickReady() {
