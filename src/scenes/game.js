@@ -6,6 +6,7 @@ import goalPost from "../assets/goalPost.png";
 import ballImg from "../assets/ball.png";
 import topBlockImg from "../assets/top.png";
 import sideBlockImg from "../assets/side.png";
+import goalPostSm from "../assets/goalPostSm.png";
 export default class Game extends Phaser.Scene {
 	constructor() {
 		super("game");
@@ -44,6 +45,7 @@ export default class Game extends Phaser.Scene {
 		this.load.image("ball", ballImg);
 		this.load.image("topBlock", topBlockImg);
 		this.load.image("sideBlock", sideBlockImg);
+		this.load.image("goalPostSm", goalPostSm);
 	}
 
 	create() {
@@ -120,6 +122,20 @@ export default class Game extends Phaser.Scene {
 			125
 		);
 		this.physics.add.existing(this.goalRight);
+
+		//* Extra goal things
+		this.goalPost1Sm = this.physics.add.staticImage(35, 168, "goalPostSm");
+		this.goalPost2Sm = this.physics.add.staticImage(35, 312, "goalPostSm");
+		this.goalPost3Sm = this.physics.add.staticImage(
+			this.screenW - 35,
+			168,
+			"goalPostSm"
+		);
+		this.goalPost4Sm = this.physics.add.staticImage(
+			this.screenW - 35,
+			312,
+			"goalPostSm"
+		);
 
 		//* Ball block things
 		this.ballBlock1 = this.physics.add.staticImage(this.centerX, 0, "topBlock");
@@ -330,8 +346,6 @@ export default class Game extends Phaser.Scene {
 			this.player1.rotation = 0;
 		}
 
-		console.log(this.isPlayer1KickReady());
-
 		if (
 			keySpace.isDown &&
 			Phaser.Math.Distance.BetweenPoints(this.player1, this.ball) <= 45 &&
@@ -402,6 +416,11 @@ export default class Game extends Phaser.Scene {
 			scene.physics.collide(object, scene.goalPost2);
 			scene.physics.collide(object, scene.goalPost3);
 			scene.physics.collide(object, scene.goalPost4);
+
+			scene.physics.collide(object, scene.goalPost1Sm, restart);
+			scene.physics.collide(object, scene.goalPost2Sm, restart);
+			scene.physics.collide(object, scene.goalPost3Sm, restart);
+			scene.physics.collide(object, scene.goalPost4Sm, restart);
 		}
 		goalCollide(this.player2);
 		goalCollide(this.player1);
@@ -588,7 +607,7 @@ export default class Game extends Phaser.Scene {
 	}
 
 	isPlayer1KickReady() {
-		return this.player1KickCooldown < 1; 
+		return this.player1KickCooldown < 1;
 	}
 
 	isPlayer2KickReady() {
