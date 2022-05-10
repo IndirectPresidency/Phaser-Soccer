@@ -29,7 +29,7 @@ export default class Game extends Phaser.Scene {
 		this.paused = false;
 		this.lastTouched = "";
 		this.showScoreTime = 5000;
-		this.kickCooldownTIme = 10;
+		this.kickCooldownTime = 10;
 		this.player1KickCooldown = 0;
 		this.player2KickCooldown = 0;
 		this.kickDistance = 40;
@@ -191,6 +191,18 @@ export default class Game extends Phaser.Scene {
 		);
 		this.startTimerTxt.visible = false;
 
+		//* Kick Cooldown Bar
+		this.player1KickCooldownTxt = this.add.text(
+			5,
+			this.screenH - 25,
+			"You can kick in: " + this.player1KickCooldown + " seconds"
+		);
+		this.player2KickCooldownTxt = this.add.text(
+			this.screenW - (5 + this.player1KickCooldownTxt.width),
+			this.screenH - 25,
+			"You can kick in: " + this.player2KickCooldown + " seconds"
+		);
+
 		//* End screen
 		this.endScreenBg = this.add.rectangle(
 			this.centerX,
@@ -209,7 +221,7 @@ export default class Game extends Phaser.Scene {
 		this.winnerTxt.visible = false;
 
 		//* Score Text
-		const spaceApart = 30;
+		const spaceApart = 80;
 		this.score1 = this.add.text(this.centerX - spaceApart, 10, "0", {
 			fontFamily: "arial",
 			fontSize: "50px",
@@ -254,6 +266,8 @@ export default class Game extends Phaser.Scene {
 			this.ball.setVelocity(0);
 			return;
 		}
+
+		this.setKickCooldown();
 
 		const cursors = this.input.keyboard.createCursorKeys();
 		const scene = this;
@@ -391,6 +405,9 @@ export default class Game extends Phaser.Scene {
 		}
 
 		function goalLeft() {
+			scene.player1KickCooldown = 0;
+			scene.player2KickCooldown = 0;
+			scene.setKickCooldown();
 			scene.paused = true;
 			scene.showScore(scene.lastTouched, 0);
 			scene.scores[1]++;
@@ -401,6 +418,9 @@ export default class Game extends Phaser.Scene {
 		}
 
 		function goalRight() {
+			scene.player1KickCooldown = 0;
+			scene.player2KickCooldown = 0;
+			scene.setKickCooldown();
 			scene.paused = true;
 			scene.showScore(scene.lastTouched, 1);
 			scene.scores[0]++;
@@ -587,7 +607,7 @@ export default class Game extends Phaser.Scene {
 	}
 
 	player1KickCooldownFun() {
-		this.player1KickCooldown = this.kickCooldownTIme;
+		this.player1KickCooldown = this.kickCooldownTime;
 		const timer = setInterval(() => {
 			if (this.player1KickCooldown < 1) {
 				clearInterval(timer);
@@ -598,7 +618,7 @@ export default class Game extends Phaser.Scene {
 	}
 
 	player2KickCooldownFun() {
-		this.player2KickCooldown = this.kickCooldownTIme;
+		this.player2KickCooldown = this.kickCooldownTime;
 		const timer = setInterval(() => {
 			if (this.player2KickCooldown < 1) {
 				clearInterval(timer);
@@ -614,5 +634,14 @@ export default class Game extends Phaser.Scene {
 
 	isPlayer2KickReady() {
 		return this.player2KickCooldown < 1;
+	}
+
+	setKickCooldown() {
+		this.player1KickCooldownTxt.setText(
+			"You can kick in: " + this.player1KickCooldown + " seconds"
+		);
+		this.player2KickCooldownTxt.setText(
+			"You can kick in: " + this.player2KickCooldown + " seconds"
+		);
 	}
 }
